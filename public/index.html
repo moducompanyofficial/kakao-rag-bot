@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 상담봇 데모</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --accent:#391b1b; --me:#ffe14d; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system,"Noto Sans KR",sans-serif; background:var(--bg); display:flex; justify-content:center; min-height:100vh; }
+  .app { width:100%; max-width:480px; display:flex; flex-direction:column; height:100vh; }
+  header { padding:16px 20px; background:var(--card); border-bottom:1px solid #e5e7eb; }
+  header h1 { font-size:16px; }
+  header p { font-size:12px; color:#6b7280; margin-top:2px; }
+  #log { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .msg { max-width:80%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.5; white-space:pre-wrap; }
+  .bot { background:var(--card); border:1px solid #e5e7eb; align-self:flex-start; border-bottom-left-radius:4px; }
+  .me  { background:var(--me); align-self:flex-end; border-bottom-right-radius:4px; }
+  .src { font-size:11px; color:#9ca3af; margin-top:6px; }
+  form { display:flex; gap:8px; padding:12px 16px; background:var(--card); border-top:1px solid #e5e7eb; }
+  input { flex:1; padding:10px 14px; border:1px solid #d1d5db; border-radius:20px; font-size:14px; outline:none; }
+  button { padding:10px 18px; border:0; border-radius:20px; background:var(--accent); color:#fff; font-size:14px; cursor:pointer; }
+  button:disabled { opacity:.5; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1 id="botName">AI 상담봇 데모</h1>
+    <p>회사 문서를 학습해 출처를 인용하며 답변합니다 · 카카오톡 채널 연동 지원</p>
+  </header>
+  <div id="log"></div>
+  <form id="form">
+    <input id="q" placeholder="예: 배송은 얼마나 걸리나요?" autocomplete="off" />
+    <button id="send">전송</button>
+  </form>
+</div>
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const q = document.getElementById("q");
+const send = document.getElementById("send");
+
+function add(text, cls, sources) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.textContent = text;
+  if (sources && sources.length) {
+    const s = document.createElement("div");
+    s.className = "src";
+    s.textContent = "출처: " + sources.join(", ");
+    div.appendChild(s);
+  }
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+add("안녕하세요! 무엇을 도와드릴까요?\n(이 봇은 업로드된 회사 문서만 근거로 답합니다)", "bot");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const question = q.value.trim();
+  if (!question) return;
+  add(question, "me");
+  q.value = "";
+  send.disabled = true;
+  const thinking = add("입력 중…", "bot");
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const data = await res.json();
+    thinking.remove();
+    add(data.text ?? data.error ?? "오류가 발생했습니다.", "bot", data.sources);
+  } catch {
+    thinking.remove();
+    add("네트워크 오류가 발생했습니다.", "bot");
+  } finally {
+    send.disabled = false;
+    q.focus();
+  }
+});
+</script>
+</body>
+</html>
