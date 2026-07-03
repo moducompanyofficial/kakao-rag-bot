@@ -1,0 +1,16 @@
+{
+  "name": "kakao-rag-bot",
+  "version": "0.1.0",
+  "description": "회사 문서로 답하는 AI 상담봇 — RAG + 카카오 i 오픈빌더 스킬서버 + 웹 데모",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "ingest": "node src/rag/ingest.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
