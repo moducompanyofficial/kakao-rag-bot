@@ -53,10 +53,10 @@ async function generateClaude(system, user) {
   return json.content[0].text;
 }
 
-let store; // lazy load + 캐시
+let store; // lazy load + 캐시 (비어 있으면 매 요청 재시도 — 부팅 ingest 완료 전 캐시 고착 방지)
 
 export async function answer(question) {
-  store ??= loadStore();
+  if (!store || store.chunks.length === 0) store = loadStore();
   if (store.chunks.length === 0) {
     return { text: "지식베이스가 비어 있습니다. `npm run ingest -- ./docs` 를 먼저 실행하세요.", sources: [] };
   }
